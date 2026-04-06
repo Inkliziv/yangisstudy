@@ -162,19 +162,329 @@ AI va ML texnologiyalari tez sur'atlar bilan rivojlanmoqda. 2030 yilga qadar glo
   {
     id: 'lesson-3',
     topicNumber: 3,
-    title: 'Blokcheyn Texnologiyasi',
+    title: 'Blokcheyn Texnologiyasi va Kriptovalyutalar',
     slug: 'blokcheyn-texnologiyasi',
-    description: 'Blokcheyn qanday ishlaydi, kriptovalyutalar va smart-kontraktlar',
+    description: 'Raqamli pullar evolyutsiyasi, blokcheyn DLT, PoW va PoS, CBDC va global tartibga solish',
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     videoDuration: '1:50:00',
     order: 3,
-    lectureText: `# Blokcheyn Texnologiyasi
+    lectureText: `# Blokcheyn Texnologiyasi va Kriptovalyutalar
 
-## Blokcheyn Nima?
+## 3.1.1. Raqamli Pullarning Evolyutsiyasi: David Chaumdan Satoshi Nakamotogacha
 
-Blokcheyn — bu markazlashmagan, o'zgartirib bo'lmaydigan raqamli daftar (ledger) bo'lib, ma'lumotlar bloklar zanjirida saqlanadi.
+Raqamli pullarning evolyutsiyasi o'n yilliklar davomida kriptograflar, matematiklar va iqtisodchilarning birgalikdagi intilishlari mahsuli bo'lib, bu jarayon 1980-yillarning boshlarida "sayferpanklar" harakatining paydo bo'lishi bilan bevosita bog'liqdir.
 
-## Qanday Ishlaydi?
+**David Chaum (1983)** — "Blind Signatures for Untraceable Payments" ilmiy ishi bilan raqamli pullarning tamal toshini qo'ydi. U anonimlik va xavfsizlikni ta'minlovchi **DigiCash** tizimini yaratdi — markazlashgan bank tizimidan mustaqil bo'lgan birinchi elektron pul prototipi. Biroq tizim markazlashtirilgan bo'lgani uchun 1990-yillar oxiriga kelib tijoriy muvaffaqiyatsizlikka uchradi.
+
+**Adam Back (1997)** — **Hashcash** tizimini taklif qildi. Elektron pochtadagi spamga qarshi kurashish vositasi sifatida yaratilgan bu tizim zamonaviy kriptovalyutalarning o'zagi bo'lgan **Proof of Work (PoW)** algoritmining ilk ko'rinishini taqdim etdi.
+
+**Wei Dai (1998)** — **"b-money"** loyihasida birinchi marta markazsizlashtirilgan, har bir ishtirokchi o'z reyestriga ega bo'lgan pul tizimini tasvirlab berdi.
+
+**Nick Szabo** — **"Bit Gold"** kontsepsiyasini ishlab chiqdi — raqamli tanqislik (scarcity) va matematik murakkablikka asoslangan, bitkoinga eng yaqin tizim.
+
+**Satoshi Nakamoto (2008-yil 31-oktabr)** — global moliyaviy inqiroz pallasida "Bitcoin: A Peer-to-Peer Electronic Cash System" oq qog'ozini e'lon qildi. U oldingi barcha g'oyalarni — Chaumning anonimligini, Backning PoW algoritmini, Szaboning raqamli tanqisligini — yagona tizimga birlashtirdi.
+
+**2009-yil 3-yanvar** — bitkoinning birinchi **"Genesis Block"** i yaratildi, yangi raqamli moliya erasi boshlandi.
+
+---
+
+## 3.1.2. Blokcheyn — Kriptovalyutalarning "Umurtqa Pog'onasi": Taqsimlangan Reyestr Texnologiyasi (DLT)
+
+Blokcheyn — bu ma'lumotlarni **taqsimlangan reyestr texnologiyasi (Distributed Ledger Technology — DLT)** asosida saqlash usuli. Barcha tranzaksiyalar xronologik tartibda zanjirsimon bog'langan bloklar ko'rinishida saqlanadi va tarmoqning har bir ishtirokchisi ma'lumotlar bazasining nusxasiga ega.
+
+**Har bir blok quyidagilarni saqlaydi:**
+1. **Ma'lumotlar** — tranzaksiyalar ro'yxati
+2. **Xesh (Hash)** — blokning noyob identifikatori
+3. **Oldingi blokning xeshi** — zanjirning uzviyligi
+
+**Xesh funksiyasi** — har qanday hajmdagi ma'lumotni qat'iy belgilangan uzunlikdagi noyob belgilar qatoriga aylantiruvchi matematik algoritm. Blok ichidagi hatto birgina belgining o'zgarishi butun zanjirning buzilishiga olib keladi.
+
+### Blokcheynning asosiy xususiyatlari:
+- **Markazsizlashuv** — yagona nazorat markazi yo'q
+- **Shaffoflik** — har bir ishtirokchi zanjirni boshidan oxirigacha kuzatishi mumkin
+- **O'zgartirib bo'lmaslik** — ma'lumotlarni soxtalashtirish uchun butun zanjirni qayta hisoblash kerak
+- **Ishonchsiz muhitda ishonch** (Trustless Environment) — vositachilarsiz ishlash
+
+### Tarmoq arxitekturasi:
+
+**A — Markazlashgan tarmoq (Centralized):** Barcha ma'lumotlar bitta markaziy tugun orqali o'tadi. Zaif nuqta — agar markaz ishdan chiqsa, butun tizim to'xtaydi.
+
+**B — Markazsizlashgan tarmoq (Decentralized):** Bir nechta mahalliy hublar mavjud. Markazlashgan modelga qaraganda chidamliroq.
+
+**C — Taqsimlangan tarmoq (Distributed):** Blokcheyn texnologiyasining asosi. Hech qanday markaziy boshqaruv organi yo'q, ma'lumotlar barcha ishtirokchilarda bir xil nusxada saqlanadi.
+
+---
+
+## 3.1.3. Konsensus Mexanizmlari: PoW va PoS
+
+### Ish Isboti (Proof of Work — PoW)
+
+Birinchi konsensus algoritmi, bitkoinning asosi. Maynerlar yangi blokni zanjirga qo'shish uchun murakkab matematik masalani yechishi kerak.
+
+**Afzalliklari:**
+- O'ta yuqori xavfsizlik
+- 51% hujumdan himoya (ulkan resurs talab qiladi)
+
+**Kamchiliklari:**
+- Ulkan energiya iste'moli
+- Past tranzaksiya tezligi (skalabillik)
+
+### Ulush Isboti (Proof of Stake — PoS)
+
+PoW ga muqobil. Validatorlar o'z kripto-aktivlarini "steyking" qilib, blok tasdiqlash huquqiga ega bo'ladilar.
+
+**Afzalliklari:**
+- 99%+ energiya samaradorligi
+- Tezroq va arzonroq tranzaksiyalar
+
+**Kamchiliklari:**
+- "Boylar yanada boyiydi" — markazlashuv xavfi
+
+**Taqqoslash jadvali:**
+
+| Xususiyat | PoW | PoS |
+|-----------|-----|-----|
+| Resurs | Hisoblash quvvati (ASIC) | Steyking (tangalar) |
+| Energiya | Juda ko'p | Minimal |
+| Xavfsizlik | 51% hisoblash quvvati kerak | 51% tangalar kerak |
+| Misol | Bitcoin | Ethereum 2.0 |
+
+**Ethereum "The Merge" (2022-yil 15-sentabr)** — Ethereum PoW dan PoS ga o'tdi. Natija: energiya iste'moli **99.95%** ga kamaydi.
+
+---
+
+## 3.2.1. "Raqamli Oltin" Diskursi
+
+Bitkoin "raqamli oltin" sifatida talqin qilinadi — uzoq muddatli boylikni saqlash va inflyatsiyadan himoyalanish aktivi.
+
+**O'xshash xususiyatlar:**
+
+| Xususiyat | Oltin | Bitkoin |
+|-----------|-------|---------|
+| Cheklangan miqdor | Geologik cheklov | 21 mln dona |
+| Chidamlilik | Kimyoviy barqarorlik | Raqamli doimiylik |
+| Bo'linuvchanlik | Cheklangan | 1 BTC = 100 mln Satoshi |
+| Portativlik | Og'ir | Seed-fraza bilan osongina |
+
+**Xalving (Halving)** — har 210 000 blokdan keyin yangi tangalar ishlab chiqarish ikki barobar kamayadi. Bu raqamli tanqislikni ta'minlaydi va deflyatsion tabiati bilan investorlar ishonchini oshiradi.
+
+---
+
+## 3.2.2. Texno-libertarianizm va Kiber-Anarxizm
+
+Kriptovalyutalar chuqur ijtimoiy-siyosiy falsafaga tayangan. **Texno-libertarianizm** shaxsiy erkinlikni oliy qadriyat deb biladi; **kiber-anarxizm** kriptografiyani ozodlik vositasi sifatida ko'radi.
+
+> **Timoti Mey (1988):** "Kripto-Anarxist Manifest" — kriptografiya hukumatlarning nazorat qilish qobiliyatini yo'qqa chiqaradi.
+
+**Markazsizlashtirish** = nafaqat texnik yechim, balki pul emissiyasi monopoliyasini sindirish vositasi. Satoshi Nakamotoning maqsadi ham aynan shu edi.
+
+---
+
+## 3.2.3. Moliyaviy Inklyuzivlik: Unbanked Aholi uchun Imkoniyatlar
+
+Dunyo miqyosida milliardlab insonlar rasmiy bank hisobiga ega emas. Sabablari:
+- Shaxsni tasdiqlovchi hujjatlar yo'qligi
+- Bank infratuzilmasining uzoqligi
+- Yuqori xizmat haqlari
+
+Kriptovalyutalar bu to'siqlarni bartaraf etadi: **internetga ulangan har qanday smartfon egasi** hech qanday vositachisiz global moliya tizimiga ulanishi mumkin.
+
+**Stabilkoinlar** — milliy valyutalari yuqori inflyatsiyaga uchrayotgan rivojlanayotgan mamlakatlarda jamg'armalarni himoya qilishning raqamli vositasi.
+
+---
+
+## 3.2.4. Spekulyativ Aktiv va "Ko'pik" Diskursi
+
+Tanqidchilar nuqtai nazaridan kriptovalyutalar:
+- Real iqtisodiy qiymatga ega bo'lmagan spekulyativ aktivlar
+- Tarixiy "lolalar isitmasi" (Tulip Mania) ga o'xshash
+- **"Katta ahmoq nazariyasi"** (Greater Fool Theory) ga asoslangan
+
+**Asosiy xavflar:**
+- O'ta yuqori volatillik (narxlar keskin o'zgarishi)
+- FOMO psixologiyasi
+- Noqonuniy operatsiyalar uchun ishlatilish xavfi
+- Ekologik zarar (PoW)
+
+---
+
+## 3.3.1. Mayning Jarayonining Energiya Sig'imi
+
+Bitkoin mayningi **SHA-256 xesh-funksiyasi** yechimini topish uchun soniyada trillionlab matematik amallarni bajarishni talab qiladi. **"Murakkablikni moslashtirish"** (Difficulty Adjustment) mexanizmi tarmoq quvvati ortgani sayin masalani qiyinlashtiradi.
+
+Natija: global miqyosda Bitkoin iste'mol qiladigan elektr energiyasi ko'plab rivojlangan davlatlarning yillik iste'moli bilan tenglashadi.
+
+---
+
+## 3.3.2. "Uglerod Izi" va Iqlim O'zgarishi
+
+**Uglerod izi (Carbon Footprint)** — mayning jarayonida sarflanadigan elektr energiyasi ishlab chiqarish natijasida atmosferaga chiqariladigan CO₂ miqdori.
+
+**Qo'shimcha muammo — Elektron chiqindilar (e-waste):**
+- ASIC qurilmalar tezda eskiradi
+- Boshqa maqsadlarda ishlatish imkoni yo'q
+- Har yili minglab tonna toksik chiqindi
+
+---
+
+## 3.3.3. Yashil Mayning (Green Mining)
+
+Qayta tiklanuvchi energiya manbalariga o'tish:
+- ☀️ Quyosh energiyasi
+- 💨 Shamol energiyasi
+- 💧 Gidroenergetika
+- 🌋 Geotermal energiya
+
+**Afzalligi:** Ortiqcha yoki to'lib-toshgan energiya ("stranded energy") dan samarali foydalanish. Masalan, uzoq hududlardagi GES da hosil bo'lgan va umumiy tarmoqqa yetib bormaydigan energiyani mayningga yo'naltirish.
+
+> Bugungi kunda global bitkoin mayning tarmog'ining **50%+ i** barqaror energiya manbalariga tayangan.
+
+O'zbekiston: Quyosh energetikasi imkoniyatlari yuqori — yashil mayning uchun katta istiqbol.
+
+---
+
+## 3.3.4. Ethereum 2.0 (PoS) ga O'tish: "The Merge"
+
+**2022-yil 15-sentabr** — "The Merge":
+- PoW → PoS ga to'liq o'tish
+- Energiya iste'moli: **99.95%** ga kamaydi
+- Ulkan mayning fermalariga bo'lgan ehtiyoj yo'qoldi
+
+Bu raqamli innovatsiyalarning ekologik mas'uliyat bilan integratsiyasining eng yirik laboratoriya tajribasi hisoblanadi.
+
+---
+
+## 3.4.1. Milliy Suverenitet va Kriptovalyutalar
+
+Markaziy banklar tarixan pul emissiyasi va pul-kredit siyosatida mutloq monopoliyaga ega. Kriptovalyutalar bu leverlarni chetlab o'tadi:
+
+**Asosiy xavotirlar:**
+- Soliq yig'ishning qiyinlashishi
+- Iqtisodiy rag'batlantirishning samarasizligi
+- Moliyaviy barqarorlik nazoratining zaiflashishi
+
+**Javob: CBDC (Markaziy bank raqamli valyutalari)** — markazsizlashgan tizimlar qulayliklarini saqlab, pul ustidan davlat nazoratini qayta tiklash.
+
+---
+
+## 3.4.2. Sanksiyalarni Aylanib O'tish: Kripto "Iqtisodiy Qurol" Sifatida
+
+Kriptovalyutalar zamonaviy sanksiyalar mexanizmlarini murakkablashtiradi:
+- SWIFT kabi markazlashgan tizimlardan foydalanmaslik imkoni
+- Transchegaraviy P2P o'tkazmalar
+- Blokirovka qilish uchun markaziy organ yo'q
+
+**Javob:** FATF standartlari, "on-chain" tahliliy vositalar, kiber-iqtisodiy razvedka.
+
+---
+
+## 3.4.3. El Salvador Tajribasi: Bitcoin Davlat Valyutasi Sifatida
+
+**2021-yil 7-sentabr** — El Salvador Bitkoinni rasmiy to'lov vositasi sifatida tan olgan dunyodagi birinchi davlat.
+
+**Maqsadlar:**
+- Unbanked aholini moliya tizimiga integratsiya (70%+)
+- Remittances komissiyalarini kamaytirish (YIM ning 20-25%)
+- Xorijiy investitsiyalarni jalb qilish
+
+**Natijalar:**
+- ✅ Turizm ~30% o'sdi
+- ✅ "Bitcoin Beach" texnologik klasterlar
+- ❌ Aholining past raqamli savodxonligi skeptitsizmni oshirdi
+- ❌ IMF va Jahon banki moliyaviy xavflar haqida ogohlantirdi
+
+**Xulosa:** Texnologiya yetarli emas — raqamli ta'lim, huquqiy infratuzilma va makroiqtisodiy xavf boshqaruvi zarur.
+
+---
+
+## 3.4.4. Markaziy Bank Raqamli Valyutalari (CBDC)
+
+**CBDC** — an'anaviy naqd pullarning raqamli ekvivalenti, davlat tomonidan kafolatlangan.
+
+### CBDC va Kriptovalyutalarning Qiyosiy Tahlili
+
+| Xususiyat | Kriptovalyutalar | CBDC |
+|-----------|-----------------|------|
+| Boshqaruv | Markazsizlashgan | Markazlashgan (MB) |
+| Kafolat | Hech kimniki emas | Davlat majburiyati |
+| Qiymat | Volatil (bozor) | Barqaror (milliy valyuta) |
+| Anonimlik | Psevdonim | Cheklangan (davlat nazorati) |
+| Texnologiya | Ochiq blokcheyn | Yopiq/Gibrid DLT |
+| Maqsad | Muqobil moliya | To'lov modernizatsiyasi |
+
+**Misollar:**
+- 🇨🇳 **Xitoy Raqamli Yuani (e-CNY)** — 100 mln+ foydalanuvchi (2026)
+- 🇺🇿 **O'zbekiston "Raqamli So'm"** — moliya shaffofligini oshirish, yashirin iqtisodiyotni kamaytirish
+
+---
+
+## 3.5.1. Global Tartibga Solish Trendlari
+
+### AQSh (SEC)
+- Kripto-aktivlarni "qimmatli qog'oz" deb hisoblaydi
+- **"Xoui testi"** (Howey Test) mezonlarini qo'llaydi
+- 2024-2025: yangi yo'riqnomalar bilan shaffoflik oshdi
+
+### Yevropa Ittifoqi (MiCA)
+**Markets in Crypto-Assets** — dunyo uchun "oltin standart":
+- Kripto-aktivlarni aniq klassifikatsiyalash
+- CASP (xizmat ko'rsatuvchi provayderlar) litsenziyalash
+- Iste'molchilar xavfsizligi
+- Yagona huquqiy makon
+
+### Xitoy
+- 2021: barcha kripto-tranzaksiyalar noqonuniy, mayning taqiqlangan
+- Lekin: blokcheyn texnologiyasi (kriptovalyutasiz) qo'llaniladi
+- Davlat nazoratidagi e-CNY va BSN rivojlantirilmoqda
+
+---
+
+## 3.5.2. O'zbekistonda Kripto-Aktivlar: NAPP Roli
+
+**Istiqbolli Loyihalar Agentligi (NAPP)** — O'zbekistonda kripto-aktivlar sohasida yagona vakolatli organ.
+
+**Huquqiy asos:** Prezident Farmoni PF-121 (2022-yil 27-aprel).
+
+**Tartibga solish modeli:** "Regulatory Sandbox" — innovatsion loyihalarni maxsus huquqiy rejim ostida sinovdan o'tkazish.
+
+**Litsenziyalanadigan faoliyat turlari:**
+- Kripto-birjalar
+- Kripto-do'konlar
+- Kripto-depozitariylar
+- Mayning-pullar
+
+**Mayning:** Faqat yuridik shaxslar, yashil energiya orqali. Jismoniy shaxslarga taqiqlangan.
+
+**Soliq imtiyozi:** Kripto-aktivlar aylanmasidan olingan daromadlar soliqqa tortilmaydi — xalqaro investorlar uchun jozibador.
+
+---
+
+## 3.5.3. O'zbekistonda Kripto-Aktivlarni Sotib Olish: Amaliy Ko'rsatmalar
+
+**Asosiy qoida:** Barcha operatsiyalar faqat NAPP litsenziyasiga ega milliy provayderlar orqali.
+
+**Provayderlar turlari:**
+- **Kripto-birjalar** — kotirovka, savdo, ayirboshlash
+- **Kripto-do'konlar** — milliy/chet el valyutasida soddalashtirilgan xarid/sotuv
+
+**Xalqaro integratsiya:**
+- O'zbekiston rezidentlariga litsenziyasiz xorijiy birjalarda (Bybit va h.k.) operatsiyalar qonunan **taqiqlangan**
+- **Binance** 2025-yil yanvarda O'zbekiston bilan kelishuvga erishdi — milliy qonunchilik talablariga muvofiq ishlash huquqini oldi (CE #0004 litsenziyali mahalliy hamkor orqali)
+
+**AML/CFT:** Barcha operatsiyalar FATF standartlariga muvofiq kuzatiladi.
+
+---
+
+## Xulosa
+
+Blokcheyn texnologiyasi va kriptovalyutalar raqamli iqtisodiyotning fundamental ustuniga aylandi. David Chaumning 1983-yildagi g'oyasidan boshlab, bugungi CBDC, DeFi va global tartibga solish tizimlarigacha bo'lgan yo'l texnologik innovatsiya va ijtimoiy-siyosiy o'zgarishlarning ajralmas birligi ekanligini ko'rsatadi.
+
+**Asosiy xulosalar:**
+1. Blokcheyn = ishonchsiz muhitda ishonch (Trustless Trust)
+2. PoW → PoS evolyutsiyasi ekologik mas'uliyatni anglatadi
+3. CBDC = davlatning raqamli mustaqilligini saqlash vositasi
+4. O'zbekiston = mintaqada tartibga solishda peshqadam davlat
+5. Moliyaviy inklyuzivlik = kriptovalyutaning ijtimoiy missiyasi`,
 
 ### Blok Tuzilishi
 Har bir blok quyidagilarni o'z ichiga oladi:
