@@ -2535,6 +2535,10 @@ export const QUESTIONS: Question[] = [
   },
 ]
 
+// ── Static data access (safe for both server and client) ──────────────────
+// Server-side pages should import from lib/store directly.
+// These functions use the seed arrays as fallback and are client-safe.
+
 export function getCourse(): Course {
   return {
     ...COURSE_DATA,

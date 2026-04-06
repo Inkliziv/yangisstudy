@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useParams, useRouter } from 'next/navigation'
-import { LESSONS, getCourse, getQuestionsByLessonId } from '@/lib/data'
+import { useParams } from 'next/navigation'
+import { COURSE_DATA } from '@/lib/data'
 import VideoPlayer from '@/components/course/VideoPlayer'
 import LectureText from '@/components/course/LectureText'
 import TestModule from '@/components/course/TestModule'
 import LessonList from '@/components/course/LessonList'
 import CourseProgress from '@/components/course/CourseProgress'
 import Badge from '@/components/ui/Badge'
-import { Play, BookOpen, ClipboardList, Trophy, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react'
+import { Play, BookOpen, ClipboardList, Trophy, ChevronLeft, ChevronRight, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { LessonProgress, StudentProgress } from '@/types'
+import { Lesson, Question, StudentProgress } from '@/types'
 import Button from '@/components/ui/Button'
 import Link from 'next/link'
 
@@ -21,62 +21,75 @@ type Tab = 'video' | 'lecture' | 'test' | 'grade'
 export default function LessonPage() {
   const { data: session } = useSession()
   const params = useParams()
-  const router = useRouter()
   const slug = params.slug as string
   const lessonId = params.lessonId as string
 
-  const lesson = LESSONS.find((l) => l.id === lessonId)
-  const questions = lesson ? getQuestionsByLessonId(lesson.id) : []
-  const course = getCourse()
-  const lessonIndex = LESSONS.findIndex((l) => l.id === lessonId)
-  const prevLesson = lessonIndex > 0 ? LESSONS[lessonIndex - 1] : null
-  const nextLesson = lessonIndex < LESSONS.length - 1 ? LESSONS[lessonIndex + 1] : null
-
-  const [tab, setTab] = useState<Tab>('video')
+  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [questions, setQuestions] = useState<Question[]>([])
   const [progress, setProgress] = useState<StudentProgress | null>(null)
+  const [tab, setTab] = useState<Tab>('video')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   const userId = (session?.user as any)?.id
+  const courseId = COURSE_DATA.id
 
+  // Load lessons + questions from API (reflects admin edits)
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/lessons').then((r) => r.json()),
+      fetch(`/api/questions?lessonId=${lessonId}`).then((r) => r.json()),
+    ]).then(([ld, qd]) => {
+      setLessons(ld.lessons ?? [])
+      setQuestions(qd.questions ?? [])
+      setDataLoaded(true)
+    })
+  }, [lessonId])
+
+  // Load progress
   useEffect(() => {
     if (!userId) return
-    fetch(`/api/progress?courseId=${course.id}`)
+    fetch(`/api/progress?courseId=${courseId}`)
       .then((r) => r.json())
       .then((d) => setProgress(d.progress ?? null))
-  }, [userId, course.id])
+  }, [userId, courseId])
 
+  const lesson = lessons.find((l) => l.id === lessonId)
+  const lessonIndex = lessons.findIndex((l) => l.id === lessonId)
+  const prevLesson = lessonIndex > 0 ? lessons[lessonIndex - 1] : null
+  const nextLesson = lessonIndex < lessons.length - 1 ? lessons[lessonIndex + 1] : null
   const lessonProg = progress?.lessons.find((l) => l.lessonId === lessonId)
   const bestScore = lessonProg?.testPercentage ?? 0
 
   const markVideo = async () => {
-    if (!userId) return
+    if (!userId || !lesson) return
     await fetch('/api/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ courseId: course.id, lessonId, topicNumber: lesson?.topicNumber, videoWatched: true }),
+      body: JSON.stringify({ courseId, lessonId, topicNumber: lesson.topicNumber, videoWatched: true }),
     })
     refreshProgress()
   }
 
   const markLecture = async () => {
-    if (!userId) return
+    if (!userId || !lesson) return
     await fetch('/api/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ courseId: course.id, lessonId, topicNumber: lesson?.topicNumber, lectureRead: true }),
+      body: JSON.stringify({ courseId, lessonId, topicNumber: lesson.topicNumber, lectureRead: true }),
     })
     refreshProgress()
   }
 
   const handleTestComplete = async (score: number, percentage: number, passed: boolean) => {
-    if (!userId) return
+    if (!userId || !lesson) return
     await fetch('/api/tests/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        courseId: course.id,
+        courseId,
         lessonId,
-        topicNumber: lesson?.topicNumber,
+        topicNumber: lesson.topicNumber,
         score,
         percentage,
         passed,
@@ -89,9 +102,26 @@ export default function LessonPage() {
 
   const refreshProgress = () => {
     if (!userId) return
-    fetch(`/api/progress?courseId=${course.id}`)
+    fetch(`/api/progress?courseId=${courseId}`)
       .then((r) => r.json())
       .then((d) => setProgress(d.progress ?? null))
+  }
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: 'video', label: 'Video', icon: <Play size={14} /> },
+    { id: 'lecture', label: "Ma'ruza", icon: <BookOpen size={14} /> },
+    { id: 'test', label: 'Test', icon: <ClipboardList size={14} /> },
+    { id: 'grade', label: 'Natija', icon: <Trophy size={14} /> },
+  ]
+
+  if (!dataLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="space-y-3 w-full max-w-2xl px-4">
+          {Array(3).fill(0).map((_, i) => <div key={i} className="h-16 rounded-xl shimmer" />)}
+        </div>
+      </div>
+    )
   }
 
   if (!lesson) {
@@ -104,13 +134,6 @@ export default function LessonPage() {
       </div>
     )
   }
-
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'video', label: 'Video', icon: <Play size={14} /> },
-    { id: 'lecture', label: "Ma'ruza", icon: <BookOpen size={14} /> },
-    { id: 'test', label: 'Test', icon: <ClipboardList size={14} /> },
-    { id: 'grade', label: 'Natija', icon: <Trophy size={14} /> },
-  ]
 
   return (
     <div className="min-h-screen flex">
@@ -132,7 +155,7 @@ export default function LessonPage() {
             </Link>
           </div>
           <LessonList
-            lessons={LESSONS}
+            lessons={lessons}
             currentLessonId={lessonId}
             progress={progress?.lessons ?? []}
             courseSlug={slug}
@@ -183,18 +206,10 @@ export default function LessonPage() {
           {/* Tab content */}
           <div className="bg-surface border border-border rounded-2xl p-6">
             {tab === 'video' && (
-              <VideoPlayer
-                videoUrl={lesson.videoUrl}
-                title={lesson.title}
-                onWatched={markVideo}
-              />
+              <VideoPlayer videoUrl={lesson.videoUrl} title={lesson.title} onWatched={markVideo} />
             )}
             {tab === 'lecture' && (
-              <LectureText
-                content={lesson.lectureText}
-                title={lesson.title}
-                onRead={markLecture}
-              />
+              <LectureText content={lesson.lectureText} title={lesson.title} onRead={markLecture} />
             )}
             {tab === 'test' && (
               questions.length > 0 ? (
@@ -212,7 +227,7 @@ export default function LessonPage() {
             {tab === 'grade' && (
               <div className="max-w-sm mx-auto">
                 <h2 className="text-lg font-bold font-display text-text-primary mb-6 text-center">Natijalar</h2>
-                <CourseProgress progress={progress} totalLessons={15} />
+                <CourseProgress progress={progress} totalLessons={lessons.length} />
               </div>
             )}
           </div>
@@ -242,7 +257,7 @@ export default function LessonPage() {
       {/* Right sidebar (progress) — desktop only */}
       <aside className="hidden xl:block w-64 shrink-0 border-l border-border p-4 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
         <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-4">Progress</h3>
-        <CourseProgress progress={progress} totalLessons={15} />
+        <CourseProgress progress={progress} totalLessons={lessons.length} />
       </aside>
     </div>
   )

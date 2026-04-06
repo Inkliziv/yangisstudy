@@ -2,7 +2,8 @@ import fs from 'fs'
 import path from 'path'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
-import { User, StudentProgress, TestAttempt, LessonProgress } from '@/types'
+import { User, StudentProgress, TestAttempt, LessonProgress, Lesson, Question } from '@/types'
+import { LESSONS as SEED_LESSONS, QUESTIONS as SEED_QUESTIONS, COURSE_DATA } from './data'
 
 // On Vercel, use /tmp (writable). Locally use ./data/
 const DATA_DIR = process.env.VERCEL
@@ -15,6 +16,8 @@ interface Store {
   users: User[]
   progress: StudentProgress[]
   testAttempts: TestAttempt[]
+  lessons: Lesson[]
+  questions: Question[]
 }
 
 function ensureDataDir() {
@@ -50,6 +53,8 @@ function getDefaultStore(): Store {
     ],
     progress: [],
     testAttempts: [],
+    lessons: SEED_LESSONS,
+    questions: SEED_QUESTIONS,
   }
 }
 
@@ -62,7 +67,15 @@ export function getStore(): Store {
   }
   try {
     const raw = fs.readFileSync(STORE_FILE, 'utf-8')
-    return JSON.parse(raw) as Store
+    const store = JSON.parse(raw) as Store
+    // Migrate: if old store has no lessons/questions, seed them
+    if (!store.lessons || store.lessons.length === 0) {
+      store.lessons = SEED_LESSONS
+    }
+    if (!store.questions || store.questions.length === 0) {
+      store.questions = SEED_QUESTIONS
+    }
+    return store
   } catch {
     const defaultStore = getDefaultStore()
     fs.writeFileSync(STORE_FILE, JSON.stringify(defaultStore, null, 2))
@@ -133,6 +146,80 @@ export function deleteUser(id: string): boolean {
   return store.users.length < before
 }
 
+// ── Lessons ────────────────────────────────────────────────────────────────
+
+export function getStoreLessons(): Lesson[] {
+  return getStore().lessons.sort((a, b) => a.order - b.order)
+}
+
+export function getStoreLessonById(id: string): Lesson | undefined {
+  return getStore().lessons.find((l) => l.id === id)
+}
+
+export function createLesson(data: Omit<Lesson, 'id'>): Lesson {
+  const store = getStore()
+  const lesson: Lesson = { ...data, id: uuidv4() }
+  store.lessons.push(lesson)
+  saveStore(store)
+  return lesson
+}
+
+export function updateLesson(id: string, updates: Partial<Lesson>): Lesson | null {
+  const store = getStore()
+  const idx = store.lessons.findIndex((l) => l.id === id)
+  if (idx === -1) return null
+  store.lessons[idx] = { ...store.lessons[idx], ...updates }
+  saveStore(store)
+  return store.lessons[idx]
+}
+
+export function deleteLesson(id: string): boolean {
+  const store = getStore()
+  const before = store.lessons.length
+  store.lessons = store.lessons.filter((l) => l.id !== id)
+  // Also delete related questions
+  store.questions = store.questions.filter((q) => q.lessonId !== id)
+  saveStore(store)
+  return store.lessons.length < before
+}
+
+// ── Questions ──────────────────────────────────────────────────────────────
+
+export function getStoreQuestions(lessonId?: string): Question[] {
+  const store = getStore()
+  if (lessonId) return store.questions.filter((q) => q.lessonId === lessonId)
+  return store.questions
+}
+
+export function getStoreQuestionById(id: string): Question | undefined {
+  return getStore().questions.find((q) => q.id === id)
+}
+
+export function createQuestion(data: Omit<Question, 'id'>): Question {
+  const store = getStore()
+  const question: Question = { ...data, id: uuidv4() }
+  store.questions.push(question)
+  saveStore(store)
+  return question
+}
+
+export function updateQuestion(id: string, updates: Partial<Question>): Question | null {
+  const store = getStore()
+  const idx = store.questions.findIndex((q) => q.id === id)
+  if (idx === -1) return null
+  store.questions[idx] = { ...store.questions[idx], ...updates }
+  saveStore(store)
+  return store.questions[idx]
+}
+
+export function deleteQuestion(id: string): boolean {
+  const store = getStore()
+  const before = store.questions.length
+  store.questions = store.questions.filter((q) => q.id !== id)
+  saveStore(store)
+  return store.questions.length < before
+}
+
 // ── Progress ───────────────────────────────────────────────────────────────
 
 export function getProgress(userId: string, courseId: string): StudentProgress | null {
@@ -148,7 +235,6 @@ export function initProgress(userId: string, courseId: string): StudentProgress 
   const store = getStore()
   const existing = store.progress.find((p) => p.userId === userId && p.courseId === courseId)
   if (existing) return existing
-
   const prog: StudentProgress = {
     userId,
     courseId,
@@ -170,7 +256,6 @@ export function updateLessonProgress(
 ): StudentProgress {
   const store = getStore()
   let prog = store.progress.find((p) => p.userId === userId && p.courseId === courseId)
-
   if (!prog) {
     prog = {
       userId,
@@ -183,7 +268,6 @@ export function updateLessonProgress(
     }
     store.progress.push(prog)
   }
-
   const lessonIdx = prog.lessons.findIndex((l) => l.lessonId === lessonUpdate.lessonId)
   if (lessonIdx === -1) {
     prog.lessons.push({
@@ -200,13 +284,11 @@ export function updateLessonProgress(
   } else {
     prog.lessons[lessonIdx] = { ...prog.lessons[lessonIdx], ...lessonUpdate }
   }
-
-  const totalLessons = 15
+  const totalLessons = store.lessons.length || 15
   prog.completedLessons = prog.lessons.filter((l) => l.testPassed).length
   const totalPct = prog.lessons.reduce((acc, l) => acc + (l.testPercentage ?? 0), 0)
   prog.overallPercentage = Math.round(totalPct / totalLessons)
   prog.lastActivityAt = new Date().toISOString()
-
   const progIdx = store.progress.findIndex((p) => p.userId === userId && p.courseId === courseId)
   store.progress[progIdx] = prog
   saveStore(store)
@@ -242,17 +324,12 @@ export function getStudentGrade(userId: string): {
   const prog = store.progress.find(
     (p) => p.userId === userId && p.courseId === 'raqamli-texnologiyalar'
   )
-
   if (!prog) return { grade: 'F', percentage: 0, completedTopics: 0 }
-
   const pct = prog.overallPercentage
-  const completed = prog.completedLessons
-
   let grade = 'F'
   if (pct >= 90) grade = 'A'
   else if (pct >= 75) grade = 'B'
   else if (pct >= 60) grade = 'C'
   else if (pct >= 50) grade = 'D'
-
-  return { grade, percentage: pct, completedTopics: completed }
+  return { grade, percentage: pct, completedTopics: prog.completedLessons }
 }
