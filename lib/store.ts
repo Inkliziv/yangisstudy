@@ -136,16 +136,16 @@ async function ensureSeeded() {
   const { count } = await db.from('lessons').select('*', { count: 'exact', head: true })
   if ((count ?? 0) > 0) { _seeded = true; return }
 
-  // Seed lessons in batches of 5 (lectureText can be large)
+  // Seed lessons — ignoreDuplicates:true means NEVER overwrite admin edits
   for (let i = 0; i < SEED_LESSONS.length; i += 5) {
     const batch = SEED_LESSONS.slice(i, i + 5).map((l) => lessonToRow(l))
-    await db.from('lessons').upsert(batch, { onConflict: 'id' })
+    await db.from('lessons').upsert(batch, { onConflict: 'id', ignoreDuplicates: true })
   }
 
-  // Seed questions in batches of 25
+  // Seed questions — same: only insert new, never overwrite
   for (let i = 0; i < SEED_QUESTIONS.length; i += 25) {
     const batch = SEED_QUESTIONS.slice(i, i + 25).map((q) => questionToRow(q))
-    await db.from('questions').upsert(batch, { onConflict: 'id' })
+    await db.from('questions').upsert(batch, { onConflict: 'id', ignoreDuplicates: true })
   }
 
   // Seed default users (only if none exist)
@@ -172,7 +172,7 @@ async function ensureSeeded() {
         group_name: 'MT-21',
         created_at: new Date().toISOString(),
       },
-    ], { onConflict: 'id' })
+    ], { onConflict: 'id', ignoreDuplicates: true })
   }
 
   _seeded = true

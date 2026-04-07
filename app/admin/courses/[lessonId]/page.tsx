@@ -108,7 +108,7 @@ export default function LessonEditPage() {
           topicNumber: String(updated.topicNumber),
           order: String(updated.order),
         }))
-        setSaveMsg('Saqlandi ✓')
+        setSaveMsg(`Saqlandi ✓  (${updated.videoUrl})`)
       }
     } catch (e) {
       setSaveMsg('Tarmoq xatosi')

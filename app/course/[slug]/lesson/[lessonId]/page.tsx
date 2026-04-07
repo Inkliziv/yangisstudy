@@ -37,8 +37,8 @@ export default function LessonPage() {
   // Load lessons + questions from API (reflects admin edits)
   useEffect(() => {
     Promise.all([
-      fetch('/api/lessons').then((r) => r.json()),
-      fetch(`/api/questions?lessonId=${lessonId}`).then((r) => r.json()),
+      fetch('/api/lessons', { cache: 'no-store' }).then((r) => r.json()),
+      fetch(`/api/questions?lessonId=${lessonId}`, { cache: 'no-store' }).then((r) => r.json()),
     ]).then(([ld, qd]) => {
       setLessons(ld.lessons ?? [])
       setQuestions(qd.questions ?? [])
