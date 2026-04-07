@@ -12,10 +12,23 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ videoUrl, title, onWatched }: VideoPlayerProps) {
   const [started, setStarted] = useState(false)
 
-  // Extract embed URL
-  const embedUrl = videoUrl.includes('embed')
-    ? videoUrl
-    : videoUrl.replace('watch?v=', 'embed/')
+  // Extract YouTube video ID from any URL format
+  const getEmbedUrl = (url: string): string => {
+    if (!url) return ''
+    // Already an embed URL
+    if (url.includes('youtube.com/embed/')) return url.split('?')[0]
+    // youtu.be/VIDEO_ID
+    const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)
+    if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`
+    // youtube.com/watch?v=VIDEO_ID or youtube.com/shorts/VIDEO_ID
+    const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/)
+    if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`
+    const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/)
+    if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`
+    // Return as-is if nothing matched (might already be correct)
+    return url
+  }
+  const embedUrl = getEmbedUrl(videoUrl)
 
   const handleStart = () => {
     setStarted(true)

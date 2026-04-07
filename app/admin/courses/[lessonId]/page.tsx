@@ -335,17 +335,33 @@ export default function LessonEditPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">Video URL (YouTube Embed)</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">Video URL (YouTube)</label>
                 <input
                   type="text"
                   value={form.videoUrl}
-                  onChange={(e) => setForm((p) => ({ ...p, videoUrl: e.target.value }))}
-                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                  onChange={(e) => {
+                    const raw = e.target.value
+                    // Auto-convert any YouTube URL to embed format
+                    let embed = raw
+                    const shortMatch = raw.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)
+                    const watchMatch = raw.match(/[?&]v=([a-zA-Z0-9_-]{11})/)
+                    const shortsMatch = raw.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/)
+                    if (raw.includes('youtube.com/embed/')) {
+                      embed = raw.split('?')[0]
+                    } else if (shortMatch) {
+                      embed = `https://www.youtube.com/embed/${shortMatch[1]}`
+                    } else if (watchMatch) {
+                      embed = `https://www.youtube.com/embed/${watchMatch[1]}`
+                    } else if (shortsMatch) {
+                      embed = `https://www.youtube.com/embed/${shortsMatch[1]}`
+                    }
+                    setForm((p) => ({ ...p, videoUrl: embed }))
+                  }}
+                  placeholder="https://www.youtube.com/watch?v=VIDEO_ID  yoki  youtu.be/VIDEO_ID"
                   className="w-full px-3 py-2 bg-surface-2 border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:border-blue-500/50 transition-colors font-mono"
                 />
                 <p className="mt-1 text-xs text-text-muted">
-                  YouTube video linkini embed formatiga o'tkazish:
-                  <span className="text-blue-400 ml-1">youtube.com/watch?v=ID → youtube.com/embed/ID</span>
+                  Istalgan YouTube linkni yapıştırın — avtomatik embed formatga o'tkaziladi
                 </p>
               </div>
 
