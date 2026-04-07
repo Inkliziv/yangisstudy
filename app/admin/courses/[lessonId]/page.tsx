@@ -76,36 +76,63 @@ export default function LessonEditPage() {
   const handleSaveInfo = async () => {
     setSaving(true)
     setSaveMsg('')
-    await fetch('/api/admin/lessons', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: lessonId,
-        title: form.title,
-        slug: form.slug,
-        description: form.description,
-        videoUrl: form.videoUrl,
-        videoDuration: form.videoDuration,
-        topicNumber: Number(form.topicNumber),
-        order: Number(form.order),
-      }),
-    })
+    try {
+      const res = await fetch('/api/admin/lessons', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: lessonId,
+          title: form.title,
+          slug: form.slug,
+          description: form.description,
+          videoUrl: form.videoUrl,
+          videoDuration: form.videoDuration,
+          topicNumber: Number(form.topicNumber),
+          order: Number(form.order),
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setSaveMsg(`Xato: ${json.error ?? res.status}`)
+      } else {
+        // Sync form with confirmed DB values
+        const updated = json.lesson
+        setLesson(updated)
+        setForm((p) => ({
+          ...p,
+          title: updated.title,
+          slug: updated.slug,
+          description: updated.description,
+          videoUrl: updated.videoUrl,
+          videoDuration: updated.videoDuration,
+          topicNumber: String(updated.topicNumber),
+          order: String(updated.order),
+        }))
+        setSaveMsg('Saqlandi ✓')
+      }
+    } catch (e) {
+      setSaveMsg('Tarmoq xatosi')
+    }
     setSaving(false)
-    setSaveMsg('Saqlandi!')
-    setTimeout(() => setSaveMsg(''), 2000)
+    setTimeout(() => setSaveMsg(''), 3000)
   }
 
   const handleSaveLecture = async () => {
     setSaving(true)
     setSaveMsg('')
-    await fetch('/api/admin/lessons', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: lessonId, lectureText: form.lectureText }),
-    })
+    try {
+      const res = await fetch('/api/admin/lessons', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: lessonId, lectureText: form.lectureText }),
+      })
+      const json = await res.json()
+      setSaveMsg(res.ok ? 'Saqlandi ✓' : `Xato: ${json.error ?? res.status}`)
+    } catch (e) {
+      setSaveMsg('Tarmoq xatosi')
+    }
     setSaving(false)
-    setSaveMsg('Saqlandi!')
-    setTimeout(() => setSaveMsg(''), 2000)
+    setTimeout(() => setSaveMsg(''), 3000)
   }
 
   // ── Question modal helpers ──
@@ -222,8 +249,9 @@ export default function LessonEditPage() {
           </div>
         </div>
         {saveMsg && (
-          <span className="flex items-center gap-1.5 text-sm text-emerald-400">
-            <Check size={14} />{saveMsg}
+          <span className={`flex items-center gap-1.5 text-sm ${saveMsg.startsWith('Xato') || saveMsg.includes('xato') ? 'text-red-400' : 'text-emerald-400'}`}>
+            {saveMsg.startsWith('Xato') || saveMsg.includes('xato') ? <X size={14} /> : <Check size={14} />}
+            {saveMsg}
           </span>
         )}
       </div>
@@ -350,7 +378,12 @@ export default function LessonEditPage() {
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-text-primary font-display">Ma'ruza matni (Markdown)</h2>
               <div className="flex items-center gap-2">
-                {saveMsg && <span className="text-sm text-emerald-400 flex items-center gap-1"><Check size={13} />{saveMsg}</span>}
+                {saveMsg && (
+                  <span className={`text-sm flex items-center gap-1 ${saveMsg.startsWith('Xato') || saveMsg.includes('xato') ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {saveMsg.startsWith('Xato') || saveMsg.includes('xato') ? <X size={13} /> : <Check size={13} />}
+                    {saveMsg}
+                  </span>
+                )}
                 <Button onClick={handleSaveLecture} loading={saving} size="sm">
                   <Save size={13} />
                   Saqlash
