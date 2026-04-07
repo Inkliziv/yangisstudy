@@ -8,7 +8,14 @@ function getDb() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
+    {
+      auth: { persistSession: false },
+      // Force every Supabase fetch to bypass Next.js data cache
+      global: {
+        fetch: (url: RequestInfo | URL, options: RequestInit = {}) =>
+          fetch(url, { ...options, cache: 'no-store' }),
+      },
+    }
   )
 }
 
@@ -126,15 +133,18 @@ function buildStudentProgress(userId: string, courseId: string, rows: any[]): St
   return { userId, courseId, lessons, completedLessons, overallPercentage, startedAt, lastActivityAt }
 }
 
-// ── Seed (runs once when DB is empty) ─────────────────────────────────────
+// ── Seed (runs once when DB has no lessons) ───────────────────────────────
 
 let _seeded = false
 
 async function ensureSeeded() {
   if (_seeded) return
-  const db = getDb()
-  const { count } = await db.from('lessons').select('*', { count: 'exact', head: true })
-  if ((count ?? 0) > 0) { _seeded = true; return }
+  _seeded = true // set early so concurrent calls don't double-seed
+  try {
+    const db = getDb()
+    const { count, error } = await db.from('lessons').select('*', { count: 'exact', head: true })
+    // If table doesn't exist or already has data, skip seeding
+    if (error || (count ?? 0) > 0) return
 
   // Seed lessons — ignoreDuplicates:true means NEVER overwrite admin edits
   for (let i = 0; i < SEED_LESSONS.length; i += 5) {
@@ -174,8 +184,9 @@ async function ensureSeeded() {
       },
     ], { onConflict: 'id', ignoreDuplicates: true })
   }
-
-  _seeded = true
+  } catch {
+    // Seed errors are non-fatal — DB tables might not exist yet
+  }
 }
 
 // ── Users ──────────────────────────────────────────────────────────────────
