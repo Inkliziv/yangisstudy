@@ -361,7 +361,8 @@ export default function LessonEditPage() {
                   className="w-full px-3 py-2 bg-surface-2 border border-border rounded-xl text-sm text-text-primary focus:outline-none focus:border-blue-500/50 transition-colors font-mono"
                 />
                 <p className="mt-1 text-xs text-text-muted">
-                  Istalgan YouTube linkni yapıştırın — avtomatik embed formatga o'tkaziladi
+                  YouTube, Google Drive yoki Vimeo linklarini qo'llab-quvvatlaydi.<br />
+                  <span className="text-blue-400">Google Drive:</span> drive.google.com/file/d/FILE_ID/view
                 </p>
               </div>
 
