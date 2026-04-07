@@ -21,10 +21,10 @@ export async function generateMetadata({ params }: Props) {
 export default async function CoursePage({ params }: Props) {
   if (COURSE_DATA.slug !== params.slug) notFound()
 
-  const lessons = getStoreLessons()
+  const lessons = await getStoreLessons()
   const session = await getServerSession(authOptions)
   const userId = (session?.user as any)?.id
-  const progress = userId ? getProgress(userId, COURSE_DATA.id) : null
+  const progress = userId ? await getProgress(userId, COURSE_DATA.id) : null
   const firstLesson = lessons[0]
 
   return (

@@ -9,26 +9,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const users = getAllUsers().filter((u) => u.role === 'student')
-  const allProgress = getAllProgress()
+  const users = (await getAllUsers()).filter((u) => u.role === 'student')
+  const allProgress = await getAllProgress()
 
-  const students = users.map((u) => {
-    const prog = allProgress.find((p) => p.userId === u.id && p.courseId === 'raqamli-texnologiyalar')
-    const { grade, percentage, completedTopics } = getStudentGrade(u.id)
-    return {
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      studentId: u.studentId,
-      group: u.group,
-      createdAt: u.createdAt,
-      completedLessons: prog?.completedLessons ?? 0,
-      overallPercentage: percentage,
-      grade,
-      completedTopics,
-      lastActivityAt: prog?.lastActivityAt,
-    }
-  })
+  const students = await Promise.all(
+    users.map(async (u) => {
+      const prog = allProgress.find((p) => p.userId === u.id && p.courseId === 'raqamli-texnologiyalar')
+      const { grade, percentage, completedTopics } = await getStudentGrade(u.id)
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        studentId: u.studentId,
+        group: u.group,
+        createdAt: u.createdAt,
+        completedLessons: prog?.completedLessons ?? 0,
+        overallPercentage: percentage,
+        grade,
+        completedTopics,
+        lastActivityAt: prog?.lastActivityAt,
+      }
+    })
+  )
 
   return NextResponse.json({ students })
 }
@@ -42,6 +44,6 @@ export async function DELETE(req: NextRequest) {
   const { id } = await req.json()
   if (!id) return NextResponse.json({ error: 'ID majburiy' }, { status: 400 })
 
-  deleteUser(id)
+  await deleteUser(id)
   return NextResponse.json({ success: true })
 }

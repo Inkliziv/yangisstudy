@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { courseId, lessonId, topicNumber, score, percentage, passed, totalQuestions, answers } = body
 
   // Save attempt
-  const attempt = saveTestAttempt({
+  const attempt = await saveTestAttempt({
     userId,
     lessonId,
     topicNumber,
@@ -26,11 +26,11 @@ export async function POST(req: NextRequest) {
   })
 
   // Get previous best
-  const prevAttempts = getTestAttempts(userId, lessonId)
+  const prevAttempts = await getTestAttempts(userId, lessonId)
   const bestPercentage = Math.max(...prevAttempts.map((a) => a.percentage))
 
   // Update lesson progress with best score
-  updateLessonProgress(userId, courseId, {
+  await updateLessonProgress(userId, courseId, {
     lessonId,
     topicNumber,
     testPassed: passed || prevAttempts.some((a) => a.passed),

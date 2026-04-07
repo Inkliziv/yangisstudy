@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   if (!session || !isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const lessonId = req.nextUrl.searchParams.get('lessonId') ?? undefined
-  return NextResponse.json({ questions: getStoreQuestions(lessonId) })
+  return NextResponse.json({ questions: await getStoreQuestions(lessonId) })
 }
 
 export async function POST(req: NextRequest) {
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "LessonId, savol va kamida 2 ta variant majburiy" }, { status: 400 })
   }
 
-  const question = createQuestion({
+  const question = await createQuestion({
     lessonId,
     topicNumber: Number(topicNumber) || 1,
     text,
@@ -46,7 +46,7 @@ export async function PUT(req: NextRequest) {
   const { id, ...updates } = body
   if (!id) return NextResponse.json({ error: 'ID majburiy' }, { status: 400 })
 
-  const question = updateQuestion(id, {
+  const question = await updateQuestion(id, {
     ...updates,
     correctIndex: Number(updates.correctIndex),
   })
@@ -61,6 +61,6 @@ export async function DELETE(req: NextRequest) {
   const { id } = await req.json()
   if (!id) return NextResponse.json({ error: 'ID majburiy' }, { status: 400 })
 
-  deleteQuestion(id)
+  await deleteQuestion(id)
   return NextResponse.json({ success: true })
 }

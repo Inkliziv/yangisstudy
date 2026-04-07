@@ -10,7 +10,7 @@ function isAdmin(session: any) {
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session || !isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  return NextResponse.json({ lessons: getStoreLessons() })
+  return NextResponse.json({ lessons: await getStoreLessons() })
 }
 
 export async function POST(req: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   if (!title || !slug) return NextResponse.json({ error: 'Title va slug majburiy' }, { status: 400 })
 
-  const lesson = createLesson({
+  const lesson = await createLesson({
     topicNumber: Number(topicNumber) || 1,
     title,
     slug: slug.toLowerCase().replace(/\s+/g, '-'),
@@ -44,7 +44,7 @@ export async function PUT(req: NextRequest) {
   const { id, ...updates } = body
   if (!id) return NextResponse.json({ error: 'ID majburiy' }, { status: 400 })
 
-  const lesson = updateLesson(id, updates)
+  const lesson = await updateLesson(id, updates)
   if (!lesson) return NextResponse.json({ error: 'Dars topilmadi' }, { status: 404 })
   return NextResponse.json({ lesson })
 }
@@ -56,6 +56,6 @@ export async function DELETE(req: NextRequest) {
   const { id } = await req.json()
   if (!id) return NextResponse.json({ error: 'ID majburiy' }, { status: 400 })
 
-  deleteLesson(id)
+  await deleteLesson(id)
   return NextResponse.json({ success: true })
 }

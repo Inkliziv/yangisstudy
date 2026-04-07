@@ -9,10 +9,10 @@ export const metadata = { title: 'Admin Dashboard' }
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions)
-  const users = getAllUsers()
+  const users = await getAllUsers()
   const students = users.filter((u) => u.role === 'student')
-  const allProgress = getAllProgress()
-  const allAttempts = getAllTestAttempts()
+  const allProgress = await getAllProgress()
+  const allAttempts = await getAllTestAttempts()
 
   const totalTestsPassed = allAttempts.filter((a) => a.passed).length
   const activeStudents = allProgress.filter((p) => {

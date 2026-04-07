@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
-import { getStore } from './store'
+import { getUserByEmail } from './store'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,8 +14,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
-        const store = getStore()
-        const user = store.users.find((u) => u.email === credentials.email)
+        const user = await getUserByEmail(credentials.email)
         if (!user || !user.password) return null
 
         const isValid = await bcrypt.compare(credentials.password, user.password)
@@ -56,7 +55,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET ?? 'sstudy-fallback-secret-tatu-2024',
 }

@@ -6,16 +6,17 @@ import { Users, CheckCircle2, TrendingUp, Award } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Tahlil | Admin' }
 
-export default function AnalyticsPage() {
-  const users = getAllUsers()
+export default async function AnalyticsPage() {
+  const users = await getAllUsers()
   const students = users.filter((u) => u.role === 'student')
-  const allProgress = getAllProgress()
-  const allAttempts = getAllTestAttempts()
+  const allProgress = await getAllProgress()
+  const allAttempts = await getAllTestAttempts()
 
   const totalTestsPassed = allAttempts.filter((a) => a.passed).length
   const totalAttempts = allAttempts.length
 
-  const percentages = students.map((s) => getStudentGrade(s.id).percentage)
+  const grades = await Promise.all(students.map((s) => getStudentGrade(s.id)))
+  const percentages = grades.map((g) => g.percentage)
   const avgPct = percentages.length > 0 ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length) : 0
 
   const fullyCompleted = allProgress.filter((p) => p.completedLessons >= 15).length

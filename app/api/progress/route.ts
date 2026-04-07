@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const userId = (session.user as any).id
   const courseId = req.nextUrl.searchParams.get('courseId') ?? 'raqamli-texnologiyalar'
 
-  const progress = getProgress(userId, courseId)
+  const progress = await getProgress(userId, courseId)
   return NextResponse.json({ progress })
 }
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { courseId, lessonId, topicNumber, videoWatched, lectureRead } = body
 
-  const updated = updateLessonProgress(userId, courseId, {
+  const updated = await updateLessonProgress(userId, courseId, {
     lessonId,
     topicNumber,
     ...(videoWatched !== undefined && { videoWatched }),

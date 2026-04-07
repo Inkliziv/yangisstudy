@@ -9,10 +9,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const users = getAllUsers()
+  const users = await getAllUsers()
   const students = users.filter((u) => u.role === 'student')
-  const allProgress = getAllProgress()
-  const allAttempts = getAllTestAttempts()
+  const allProgress = await getAllProgress()
+  const allAttempts = await getAllTestAttempts()
 
   const totalStudents = students.length
   const activeStudents = allProgress.filter((p) => {
@@ -22,12 +22,15 @@ export async function GET(req: NextRequest) {
 
   const totalTestsPassed = allAttempts.filter((a) => a.passed).length
 
-  const percentages = students.map((s) => getStudentGrade(s.id).percentage)
+  // Fetch all grades in parallel
+  const allGrades = await Promise.all(students.map((s) => getStudentGrade(s.id)))
+
+  const percentages = allGrades.map((g) => g.percentage)
   const averageGrade = percentages.length > 0
     ? Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length)
     : 0
 
-  const completionRate = allProgress.length > 0
+  const completionRate = students.length > 0
     ? Math.round((allProgress.filter((p) => p.completedLessons >= 15).length / students.length) * 100)
     : 0
 
@@ -39,11 +42,10 @@ export async function GET(req: NextRequest) {
     { grade: 'D', count: 0, color: '#f97316' },
     { grade: 'F', count: 0, color: '#ef4444' },
   ]
-  students.forEach((s) => {
-    const { grade } = getStudentGrade(s.id)
+  for (const { grade } of allGrades) {
     const found = gradeDist.find((g) => g.grade === grade)
     if (found) found.count++
-  })
+  }
 
   // Monthly activity (last 6 months)
   const months = []
@@ -59,10 +61,13 @@ export async function GET(req: NextRequest) {
 
   // Top students
   const topStudents = students
-    .map((s) => {
-      const { grade, percentage } = getStudentGrade(s.id)
-      return { id: s.id, name: s.name, group: s.group ?? '-', percentage, grade }
-    })
+    .map((s, i) => ({
+      id: s.id,
+      name: s.name,
+      group: s.group ?? '-',
+      percentage: allGrades[i].percentage,
+      grade: allGrades[i].grade,
+    }))
     .sort((a, b) => b.percentage - a.percentage)
     .slice(0, 10)
 
