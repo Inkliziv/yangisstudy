@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Play, AlertCircle, ExternalLink } from 'lucide-react'
+import { Play, ExternalLink } from 'lucide-react'
 
 interface VideoPlayerProps {
   videoUrl: string
@@ -9,67 +9,72 @@ interface VideoPlayerProps {
   onWatched?: () => void
 }
 
-function getEmbedUrl(url: string): { src: string; isExternal: boolean } {
-  if (!url) return { src: '', isExternal: false }
+// Returns { embedSrc, watchUrl }
+function parseVideoUrl(url: string): { embedSrc: string; watchUrl: string } {
+  if (!url) return { embedSrc: '', watchUrl: '' }
 
-  // Google Drive: drive.google.com/file/d/FILE_ID/view  →  .../preview
-  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/)
+  // Google Drive
+  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/)
   if (driveMatch) {
-    return { src: `https://drive.google.com/file/d/${driveMatch[1]}/preview`, isExternal: false }
+    return {
+      embedSrc: `https://drive.google.com/file/d/${driveMatch[1]}/preview`,
+      watchUrl: `https://drive.google.com/file/d/${driveMatch[1]}/view`,
+    }
   }
 
-  // YouTube embed already
+  // YouTube — extract video ID from any format
+  let videoId = ''
   if (url.includes('youtube.com/embed/')) {
-    return { src: url.split('?')[0], isExternal: false }
+    videoId = url.replace(/.*youtube\.com\/embed\//, '').split(/[?&]/)[0]
+  } else {
+    const ytMatch =
+      url.match(/[?&]v=([a-zA-Z0-9_-]{11})/) ||
+      url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/) ||
+      url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/)
+    if (ytMatch) videoId = ytMatch[1]
   }
-  // youtu.be/ID
-  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)
-  if (shortMatch) return { src: `https://www.youtube.com/embed/${shortMatch[1]}`, isExternal: false }
-  // youtube.com/watch?v=ID
-  const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/)
-  if (watchMatch) return { src: `https://www.youtube.com/embed/${watchMatch[1]}`, isExternal: false }
-  // youtube.com/shorts/ID
-  const shortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/)
-  if (shortsMatch) return { src: `https://www.youtube.com/embed/${shortsMatch[1]}`, isExternal: false }
 
-  // Vimeo: vimeo.com/VIDEO_ID
+  if (videoId) {
+    return {
+      // youtube-nocookie.com: same content, fewer tracking restrictions, passes more filters
+      embedSrc: `https://www.youtube-nocookie.com/embed/${videoId}`,
+      watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
+    }
+  }
+
+  // Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
-  if (vimeoMatch) return { src: `https://player.vimeo.com/video/${vimeoMatch[1]}`, isExternal: false }
+  if (vimeoMatch) {
+    return {
+      embedSrc: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
+      watchUrl: url,
+    }
+  }
 
-  // Direct video file (mp4, webm)
-  if (url.match(/\.(mp4|webm|ogg)(\?|$)/i)) return { src: url, isExternal: true }
-
-  // Unknown — return as-is
-  return { src: url, isExternal: false }
-}
-
-function isYouTubeUrl(url: string) {
-  return url.includes('youtube.com') || url.includes('youtu.be')
+  // Direct file
+  return { embedSrc: url, watchUrl: url }
 }
 
 export default function VideoPlayer({ videoUrl, title, onWatched }: VideoPlayerProps) {
   const [started, setStarted] = useState(false)
-  const [errored, setErrored] = useState(false)
 
-  const { src, isExternal } = getEmbedUrl(videoUrl)
-  const isYT = isYouTubeUrl(videoUrl)
+  const { embedSrc, watchUrl } = parseVideoUrl(videoUrl)
 
   const handleStart = () => {
     setStarted(true)
-    setErrored(false)
-    setTimeout(() => onWatched?.(), 3000)
+    setTimeout(() => onWatched?.(), 5000)
   }
-
-  const iframeSrc = isYT ? `${src}?autoplay=1&rel=0&modestbranding=1` : src
 
   return (
     <div className="w-full">
-      <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{ aspectRatio: '16/9' }}>
-
-        {/* Preview / Play button */}
-        {!started && (
+      {/* Player */}
+      <div
+        className="relative w-full rounded-2xl overflow-hidden bg-black"
+        style={{ aspectRatio: '16/9' }}
+      >
+        {!started ? (
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer group z-10"
+            className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer group"
             onClick={handleStart}
             style={{ background: 'linear-gradient(135deg, #0d1b3e 0%, #0a0e1a 100%)' }}
           >
@@ -80,82 +85,58 @@ export default function VideoPlayer({ videoUrl, title, onWatched }: VideoPlayerP
               </div>
               <div className="text-center px-6">
                 <p className="text-text-primary font-semibold text-lg font-display">{title}</p>
-                <p className="text-text-muted text-sm mt-1">Video darsni boshlash uchun bosing</p>
+                <p className="text-text-muted text-sm mt-1">
+                  Video darsni boshlash uchun bosing
+                </p>
               </div>
             </div>
           </div>
-        )}
-
-        {/* Error state */}
-        {started && errored && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface z-20 gap-4 px-6 text-center">
-            <AlertCircle size={40} className="text-yellow-400" />
-            <div>
-              <p className="text-text-primary font-semibold mb-1">Video yuklanmadi</p>
-              <p className="text-text-muted text-sm mb-4">
-                {isYT
-                  ? 'YouTube bu tarmoqda bloklangan bo\'lishi mumkin. Video muallifiga murojaat qiling yoki Google Drive linkini ishlating.'
-                  : 'Video manbasiga ulanib bo\'lmadi.'}
-              </p>
-              {videoUrl && (
-                <a
-                  href={videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-xl text-sm hover:bg-blue-500/30 transition-colors"
-                >
-                  <ExternalLink size={14} />
-                  Tashqi manbada ochish
-                </a>
-              )}
-            </div>
-            <button onClick={() => { setStarted(false); setErrored(false) }} className="text-xs text-text-muted hover:text-text-secondary">
-              Orqaga qaytish
-            </button>
-          </div>
-        )}
-
-        {/* Direct video file */}
-        {started && !errored && isExternal && (
-          <video
-            src={src}
-            autoPlay
-            controls
-            className="absolute inset-0 w-full h-full"
-            onError={() => setErrored(true)}
-          />
-        )}
-
-        {/* Iframe (YouTube / Drive / Vimeo) */}
-        {started && !errored && !isExternal && src && (
+        ) : embedSrc ? (
           <iframe
-            key={src}
-            src={iframeSrc}
+            key={embedSrc}
+            src={`${embedSrc}?autoplay=1&rel=0&modestbranding=1`}
             title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             className="absolute inset-0 w-full h-full"
-            onError={() => setErrored(true)}
           />
-        )}
-
-        {/* No URL */}
-        {started && !src && (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface z-20">
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-surface">
             <p className="text-text-muted text-sm">Video URL kiritilmagan</p>
           </div>
         )}
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-text-primary">{title}</h2>
-        {started && !errored && (
-          <span className="text-xs text-emerald-400 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-            Tomosha qilinmoqda
-          </span>
+      {/* Footer: title + external link */}
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-text-primary truncate">{title}</h2>
+        {watchUrl && (
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 flex items-center gap-1.5 text-xs text-text-muted hover:text-blue-400 transition-colors"
+          >
+            <ExternalLink size={13} />
+            Tashqida ko'rish
+          </a>
         )}
       </div>
+
+      {/* Hint shown after play clicked */}
+      {started && (
+        <p className="mt-2 text-xs text-text-muted text-center">
+          Agar video yuklanmasa —{' '}
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline"
+          >
+            shu yerda YouTube da oching
+          </a>
+        </p>
+      )}
     </div>
   )
 }
